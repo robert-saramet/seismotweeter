@@ -59,13 +59,11 @@ func serialOpen() {
 	var err error
 	ser, err = serial.OpenPort(conf)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			if port == port0 {
-				port = port1
-				serialOpen()
-			} else {
-				log.Fatalln("serial.OpenPort() failed:", err)
-			}
+		if errors.Is(err, os.ErrNotExist) && port == port0 {
+			port = port1
+			serialOpen()
+		} else {
+			log.Fatalln("serial.OpenPort() failed:", err)
 		}
 	}
 }
@@ -105,6 +103,8 @@ func parseInput(data chan string, values chan float32) {
 			val = yAverage
 		}
 		val = rl.Clamp(val, float32(yMin), float32(yMax))
+		count++
+		avg += val
 		if count == sampleCount {
 			avg /= sampleCount
 			avg = remap(avg, float32(yMin), float32(yMax), 50, xHeight)
@@ -113,9 +113,6 @@ func parseInput(data chan string, values chan float32) {
 			}
 			count = 0
 			avg = 0
-		} else {
-			count++
-			avg += val
 		}
 	}
 }
